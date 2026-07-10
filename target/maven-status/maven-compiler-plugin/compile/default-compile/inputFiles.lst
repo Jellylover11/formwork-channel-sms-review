@@ -8,6 +8,7 @@ E:\Spring Task\studio-butterfly-java-assignment\formwork-channel-sms\src\main\ja
 E:\Spring Task\studio-butterfly-java-assignment\formwork-channel-sms\src\main\java\one\formwork\channel\sms\api\SmsGateway.java
 E:\Spring Task\studio-butterfly-java-assignment\formwork-channel-sms\src\main\java\one\formwork\channel\sms\api\SmsMessage.java
 E:\Spring Task\studio-butterfly-java-assignment\formwork-channel-sms\src\main\java\one\formwork\channel\sms\api\SmsResult.java
+E:\Spring Task\studio-butterfly-java-assignment\formwork-channel-sms\src\main\java\one\formwork\channel\sms\api\TenantSmsProviderRegistry.java
 E:\Spring Task\studio-butterfly-java-assignment\formwork-channel-sms\src\main\java\one\formwork\channel\sms\config\package-info.java
 E:\Spring Task\studio-butterfly-java-assignment\formwork-channel-sms\src\main\java\one\formwork\channel\sms\config\SmsChannelAutoConfiguration.java
 E:\Spring Task\studio-butterfly-java-assignment\formwork-channel-sms\src\main\java\one\formwork\channel\sms\config\SmsFlywayAutoConfiguration.java

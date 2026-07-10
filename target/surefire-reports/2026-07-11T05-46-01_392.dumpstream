@@ -1,4 +1,4 @@
-# Created at 2026-07-11T05:26:02.163
+# Created at 2026-07-11T05:46:01.514
 Boot Manifest-JAR contains absolute paths in classpath 'E:\Spring Task\studio-butterfly-java-assignment\formwork-channel-sms\target\test-classes'
 Hint: <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
 'other' has different root

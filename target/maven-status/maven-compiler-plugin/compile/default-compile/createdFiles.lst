@@ -28,6 +28,7 @@ one\formwork\base\tenant\filter\TenantScopedEntity.class
 one\formwork\channel\sms\api\SmsChannelProperties$TwilioProperties.class
 one\formwork\channel\sms\cost\SmsCostService.class
 one\formwork\channel\sms\api\SmsChannelProperties$MessageBirdProperties.class
+one\formwork\channel\sms\api\TenantSmsProviderRegistry.class
 one\formwork\channel\sms\cost\SmsCostEntity.class
 one\formwork\channel\sms\api\SmsChannelProperties$RetryProperties.class
 one\formwork\channel\sms\provider\package-info.class

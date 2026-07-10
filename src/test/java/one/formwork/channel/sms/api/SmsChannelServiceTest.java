@@ -1,5 +1,6 @@
 package one.formwork.channel.sms.api;
 
+import one.formwork.channel.sms.api.TenantSmsProviderRegistry;
 import one.formwork.channel.sms.cost.SmsCostService;
 import java.util.UUID;
 import one.formwork.channel.sms.validation.PhoneNumberValidator.InvalidPhoneNumberException;
@@ -33,11 +34,19 @@ class SmsChannelServiceTest {
     @Mock
     private SmsCostService costService;
 
+    @Mock
+    private TenantSmsProviderRegistry tenantRegistry;
+
     private SmsChannelService service;
 
     @BeforeEach
     void setUp() {
-        service = new SmsChannelService(List.of(twilioGateway, vonageGateway), properties, costService);
+        service = new SmsChannelService(
+                List.of(twilioGateway, vonageGateway),
+                properties,
+                costService,
+                tenantRegistry
+        );
     }
 
     @Nested
@@ -95,7 +104,35 @@ class SmsChannelServiceTest {
             assertTrue(ex.getMessage().contains("UNKNOWN"));
         }
 
+        @Test
+        void sendSms_TenantHasSpecificProvider_UsesTenantProvider() {
+            when(tenantRegistry.getProviderFor(tenantId)).thenReturn(java.util.Optional.of("VONAGE"));
+            when(vonageGateway.supports("VONAGE")).thenReturn(true);
+            SmsResult expected = SmsResult.success("msg-789", "VONAGE", 1);
+            when(vonageGateway.send(any(SmsMessage.class))).thenReturn(expected);
 
+            SmsMessage message = new SmsMessage("+4915112345678", "Hello", tenantId);
+            SmsResult result = service.sendSms(message);
+
+            assertEquals(expected, result);
+            verify(vonageGateway).send(message);
+            verify(twilioGateway, never()).send(any());
+        }
+
+        @Test
+        void sendSms_TenantHasNoSpecificProvider_FallsBackToGlobal() {
+            when(tenantRegistry.getProviderFor(tenantId)).thenReturn(java.util.Optional.empty());
+            when(properties.getProvider()).thenReturn("TWILIO");
+            when(twilioGateway.supports("TWILIO")).thenReturn(true);
+            SmsResult expected = SmsResult.success("msg-101", "TWILIO", 1);
+            when(twilioGateway.send(any(SmsMessage.class))).thenReturn(expected);
+
+            SmsMessage message = new SmsMessage("+4915112345678", "Hello", tenantId);
+            SmsResult result = service.sendSms(message);
+
+            assertEquals(expected, result);
+            verify(twilioGateway).send(message);
+        }
     }
 
     @Nested

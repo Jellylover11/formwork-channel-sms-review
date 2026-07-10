@@ -1,5 +1,6 @@
 package one.formwork.channel.sms.api;
 
+import one.formwork.channel.sms.cost.SmsCostService;
 import java.util.UUID;
 import one.formwork.channel.sms.validation.PhoneNumberValidator.InvalidPhoneNumberException;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,11 +30,14 @@ class SmsChannelServiceTest {
     @Mock
     private SmsChannelProperties properties;
 
+    @Mock
+    private SmsCostService costService;
+
     private SmsChannelService service;
 
     @BeforeEach
     void setUp() {
-        service = new SmsChannelService(List.of(twilioGateway, vonageGateway), properties);
+        service = new SmsChannelService(List.of(twilioGateway, vonageGateway), properties, costService);
     }
 
     @Nested
@@ -90,6 +94,8 @@ class SmsChannelServiceTest {
                     () -> service.sendSms(message));
             assertTrue(ex.getMessage().contains("UNKNOWN"));
         }
+
+
     }
 
     @Nested
@@ -118,6 +124,32 @@ class SmsChannelServiceTest {
         void sendBulk_EmptyList_ReturnsEmptyList() {
             List<SmsResult> results = service.sendBulk(List.of());
             assertTrue(results.isEmpty());
+        }
+
+        @Test
+        void sendSms_SuccessfulSend_RecordsCost() {
+            when(properties.getProvider()).thenReturn("TWILIO");
+            when(twilioGateway.supports("TWILIO")).thenReturn(true);
+            SmsResult success = SmsResult.success("msg-123", "TWILIO", 1);
+            when(twilioGateway.send(any(SmsMessage.class))).thenReturn(success);
+
+            SmsMessage message = new SmsMessage("+4915112345678", "Hello", tenantId);
+            service.sendSms(message);
+
+            verify(costService).recordCost(tenantId, "+4915112345678", success);
+        }
+
+        @Test
+        void sendSms_FailedSend_DoesNotRecordCost() {
+            when(properties.getProvider()).thenReturn("TWILIO");
+            when(twilioGateway.supports("TWILIO")).thenReturn(true);
+            SmsResult failure = SmsResult.failure("TWILIO", "500", "provider error");
+            when(twilioGateway.send(any(SmsMessage.class))).thenReturn(failure);
+
+            SmsMessage message = new SmsMessage("+4915112345678", "Hello", tenantId);
+            service.sendSms(message);
+
+            verify(costService, never()).recordCost(any(), any(), any());
         }
     }
 

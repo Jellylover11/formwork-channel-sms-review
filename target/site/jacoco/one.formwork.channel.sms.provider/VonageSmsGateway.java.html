@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>VonageSmsGateway.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Formwork — SmsChannel</a> &gt; <a href="index.source.html" class="el_package">one.formwork.channel.sms.provider</a> &gt; <span class="el_source">VonageSmsGateway.java</span></div><h1>VonageSmsGateway.java</h1><pre class="source lang-java linenums">package one.formwork.channel.sms.provider;
+
+import one.formwork.channel.sms.api.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+
+import java.util.List;
+import java.util.Map;
+
+public class VonageSmsGateway implements SmsGateway {
+
+<span class="fc" id="L15">    private static final Logger log = LoggerFactory.getLogger(VonageSmsGateway.class);</span>
+    private static final String VONAGE_API_URL = &quot;https://rest.nexmo.com&quot;;
+
+    private final WebClient webClient;
+    private final SmsChannelProperties.VonageProperties config;
+
+<span class="fc" id="L21">    public VonageSmsGateway(SmsChannelProperties.VonageProperties config) {</span>
+<span class="fc" id="L22">        this.config = config;</span>
+<span class="fc" id="L23">        this.webClient = WebClient.builder()</span>
+<span class="fc" id="L24">                .baseUrl(VONAGE_API_URL)</span>
+<span class="fc" id="L25">                .build();</span>
+<span class="fc" id="L26">    }</span>
+
+    @Override
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public SmsResult send(SmsMessage message) {
+        try {
+<span class="fc" id="L32">            Map&lt;String, Object&gt; requestBody = Map.of(</span>
+<span class="fc" id="L33">                    &quot;api_key&quot;, config.getApiKey(),</span>
+<span class="fc" id="L34">                    &quot;api_secret&quot;, config.getApiSecret(),</span>
+<span class="fc" id="L35">                    &quot;from&quot;, config.getFromNumber(),</span>
+<span class="fc" id="L36">                    &quot;to&quot;, message.to(),</span>
+<span class="fc" id="L37">                    &quot;text&quot;, message.body()</span>
+            );
+
+<span class="fc" id="L40">            Map&lt;?, ?&gt; response = webClient.post()</span>
+<span class="fc" id="L41">                    .uri(&quot;/sms/json&quot;)</span>
+<span class="fc" id="L42">                    .contentType(MediaType.APPLICATION_JSON)</span>
+<span class="fc" id="L43">                    .bodyValue(requestBody)</span>
+<span class="fc" id="L44">                    .retrieve()</span>
+<span class="fc" id="L45">                    .bodyToMono(Map.class)</span>
+<span class="fc" id="L46">                    .block();</span>
+
+<span class="pc bpc" id="L48" title="1 of 4 branches missed.">            if (response != null &amp;&amp; response.containsKey(&quot;messages&quot;)) {</span>
+<span class="fc" id="L49">                List&lt;Map&lt;String, Object&gt;&gt; messages = (List&lt;Map&lt;String, Object&gt;&gt;) response.get(&quot;messages&quot;);</span>
+<span class="pc bpc" id="L50" title="1 of 2 branches missed.">                if (!messages.isEmpty()) {</span>
+<span class="fc" id="L51">                    Map&lt;String, Object&gt; first = messages.getFirst();</span>
+<span class="fc" id="L52">                    String status = String.valueOf(first.get(&quot;status&quot;));</span>
+<span class="fc bfc" id="L53" title="All 2 branches covered.">                    if (&quot;0&quot;.equals(status)) {</span>
+<span class="fc" id="L54">                        String messageId = String.valueOf(first.get(&quot;message-id&quot;));</span>
+<span class="fc" id="L55">                        log.info(&quot;Vonage SMS sent: messageId={}, to={}&quot;, messageId, message.to());</span>
+<span class="fc" id="L56">                        return SmsResult.success(messageId, &quot;VONAGE&quot;, messages.size());</span>
+                    } else {
+<span class="fc" id="L58">                        String errorText = String.valueOf(first.get(&quot;error-text&quot;));</span>
+<span class="fc" id="L59">                        log.error(&quot;Vonage API error: status={}, error={}&quot;, status, errorText);</span>
+<span class="fc" id="L60">                        return SmsResult.failure(&quot;VONAGE&quot;, status, errorText);</span>
+                    }
+                }
+            }
+
+<span class="fc" id="L65">            return SmsResult.failure(&quot;VONAGE&quot;, &quot;EMPTY_RESPONSE&quot;, &quot;No messages in response&quot;);</span>
+<span class="fc" id="L66">        } catch (WebClientResponseException e) {</span>
+<span class="fc" id="L67">            log.error(&quot;Vonage API error: status={}, body={}&quot;, e.getStatusCode(), e.getResponseBodyAsString());</span>
+<span class="fc" id="L68">            return SmsResult.failure(&quot;VONAGE&quot;, String.valueOf(e.getStatusCode().value()), e.getResponseBodyAsString());</span>
+<span class="nc" id="L69">        } catch (Exception e) {</span>
+<span class="nc" id="L70">            log.error(&quot;Vonage SMS send failed: {}&quot;, e.getMessage(), e);</span>
+<span class="nc" id="L71">            return SmsResult.failure(&quot;VONAGE&quot;, &quot;SEND_ERROR&quot;, e.getMessage());</span>
+        }
+    }
+
+    @Override
+    public boolean supports(String providerType) {
+<span class="fc" id="L77">        return &quot;VONAGE&quot;.equalsIgnoreCase(providerType);</span>
+    }
+
+    @Override
+    public String getProviderName() {
+<span class="fc" id="L82">        return &quot;VONAGE&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PhoneNumberValidator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Formwork — SmsChannel</a> &gt; <a href="index.source.html" class="el_package">one.formwork.channel.sms.validation</a> &gt; <span class="el_source">PhoneNumberValidator.java</span></div><h1>PhoneNumberValidator.java</h1><pre class="source lang-java linenums">package one.formwork.channel.sms.validation;
+
+import java.util.regex.Pattern;
+
+public final class PhoneNumberValidator {
+
+<span class="fc" id="L7">    private static final Pattern E164 = Pattern.compile(&quot;^\\+[1-9]\\d{6,14}$&quot;);</span>
+
+    private PhoneNumberValidator() {}
+
+    public static void validate(String phoneNumber) {
+<span class="fc bfc" id="L12" title="All 4 branches covered.">        if (phoneNumber == null || !E164.matcher(phoneNumber).matches()) {</span>
+<span class="fc" id="L13">            throw new InvalidPhoneNumberException(</span>
+                    &quot;Invalid phone number (must be E.164 format): &quot; + phoneNumber);
+        }
+<span class="fc" id="L16">    }</span>
+
+    public static class InvalidPhoneNumberException extends RuntimeException {
+<span class="fc" id="L19">        public InvalidPhoneNumberException(String message) { super(message); }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MessageBirdSmsGateway.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Formwork — SmsChannel</a> &gt; <a href="index.source.html" class="el_package">one.formwork.channel.sms.provider</a> &gt; <span class="el_source">MessageBirdSmsGateway.java</span></div><h1>MessageBirdSmsGateway.java</h1><pre class="source lang-java linenums">package one.formwork.channel.sms.provider;
+
+import one.formwork.channel.sms.api.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+
+import java.util.List;
+import java.util.Map;
+
+public class MessageBirdSmsGateway implements SmsGateway {
+
+<span class="fc" id="L15">    private static final Logger log = LoggerFactory.getLogger(MessageBirdSmsGateway.class);</span>
+    private static final String MESSAGEBIRD_API_URL = &quot;https://rest.messagebird.com&quot;;
+
+    private final WebClient webClient;
+    private final SmsChannelProperties.MessageBirdProperties config;
+
+<span class="fc" id="L21">    public MessageBirdSmsGateway(SmsChannelProperties.MessageBirdProperties config) {</span>
+<span class="fc" id="L22">        this.config = config;</span>
+<span class="fc" id="L23">        this.webClient = WebClient.builder()</span>
+<span class="fc" id="L24">                .baseUrl(MESSAGEBIRD_API_URL)</span>
+<span class="fc" id="L25">                .defaultHeader(&quot;Authorization&quot;, &quot;AccessKey &quot; + config.getAccessKey())</span>
+<span class="fc" id="L26">                .build();</span>
+<span class="fc" id="L27">    }</span>
+
+    @Override
+    public SmsResult send(SmsMessage message) {
+        try {
+<span class="fc" id="L32">            Map&lt;String, Object&gt; requestBody = Map.of(</span>
+<span class="fc" id="L33">                    &quot;originator&quot;, config.getOriginator(),</span>
+<span class="fc" id="L34">                    &quot;recipients&quot;, List.of(message.to()),</span>
+<span class="fc" id="L35">                    &quot;body&quot;, message.body()</span>
+            );
+
+<span class="fc" id="L38">            Map&lt;?, ?&gt; response = webClient.post()</span>
+<span class="fc" id="L39">                    .uri(&quot;/messages&quot;)</span>
+<span class="fc" id="L40">                    .contentType(MediaType.APPLICATION_JSON)</span>
+<span class="fc" id="L41">                    .bodyValue(requestBody)</span>
+<span class="fc" id="L42">                    .retrieve()</span>
+<span class="fc" id="L43">                    .bodyToMono(Map.class)</span>
+<span class="fc" id="L44">                    .block();</span>
+
+<span class="pc bpc" id="L46" title="1 of 2 branches missed.">            String messageId = response != null ? String.valueOf(response.get(&quot;id&quot;)) : null;</span>
+<span class="fc" id="L47">            log.info(&quot;MessageBird SMS sent: messageId={}, to={}&quot;, messageId, message.to());</span>
+<span class="fc" id="L48">            return SmsResult.success(messageId, &quot;MESSAGEBIRD&quot;, 1);</span>
+<span class="nc" id="L49">        } catch (WebClientResponseException e) {</span>
+<span class="nc" id="L50">            log.error(&quot;MessageBird API error: status={}, body={}&quot;, e.getStatusCode(), e.getResponseBodyAsString());</span>
+<span class="nc" id="L51">            return SmsResult.failure(&quot;MESSAGEBIRD&quot;, String.valueOf(e.getStatusCode().value()), e.getResponseBodyAsString());</span>
+<span class="fc" id="L52">        } catch (Exception e) {</span>
+<span class="fc" id="L53">            log.error(&quot;MessageBird SMS send failed: {}&quot;, e.getMessage(), e);</span>
+<span class="fc" id="L54">            return SmsResult.failure(&quot;MESSAGEBIRD&quot;, &quot;SEND_ERROR&quot;, e.getMessage());</span>
+        }
+    }
+
+    @Override
+    public boolean supports(String providerType) {
+<span class="fc" id="L60">        return &quot;MESSAGEBIRD&quot;.equalsIgnoreCase(providerType);</span>
+    }
+
+    @Override
+    public String getProviderName() {
+<span class="fc" id="L65">        return &quot;MESSAGEBIRD&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

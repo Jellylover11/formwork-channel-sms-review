@@ -25,6 +25,12 @@ public class VonageSmsGateway implements SmsGateway {
                 .build();
     }
 
+    // Package-private constructor for testing
+    VonageSmsGateway(SmsChannelProperties.VonageProperties config, WebClient webClient) {
+        this.config = config;
+        this.webClient = webClient;
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public SmsResult send(SmsMessage message) {
@@ -52,8 +58,16 @@ public class VonageSmsGateway implements SmsGateway {
                     String status = String.valueOf(first.get("status"));
                     if ("0".equals(status)) {
                         String messageId = String.valueOf(first.get("message-id"));
-                        log.info("Vonage SMS sent: messageId={}, to={}", messageId, message.to());
-                        return SmsResult.success(messageId, "VONAGE", messages.size());
+                        int segmentCount = 1;
+                        Object messageParts = first.get("message-parts");
+                        if (messageParts != null) {
+                            try {
+                                segmentCount = Integer.parseInt(String.valueOf(messageParts));
+                            } catch (NumberFormatException e) {
+                                log.warn("Could not parse message-parts value: {}", messageParts);
+                            }
+                        }
+                        return SmsResult.success(messageId, "VONAGE", segmentCount);
                     } else {
                         String errorText = String.valueOf(first.get("error-text"));
                         log.error("Vonage API error: status={}, error={}", status, errorText);

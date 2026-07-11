@@ -31,6 +31,7 @@ one\formwork\channel\sms\provider\MessageBirdSmsGatewayTest.class
 one\formwork\channel\sms\api\SmsChannelPropertiesTest.class
 one\formwork\channel\sms\api\SmsResultTest$IsSuccess.class
 one\formwork\channel\sms\api\SmsResultTest$FactoryMethods.class
+one\formwork\channel\sms\config\SmsChannelAutoConfigurationTest.class
 one\formwork\channel\sms\api\SmsMessageTest.class
 one\formwork\channel\sms\api\SmsChannelPropertiesTest$MessageBirdPropertiesTest.class
 one\formwork\channel\sms\cost\SmsCostEntityTest.class

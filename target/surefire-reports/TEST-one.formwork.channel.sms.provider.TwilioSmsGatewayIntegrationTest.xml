@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="one.formwork.channel.sms.cost.SmsCostServiceTest$RecordCost" time="0.018" tests="4" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="one.formwork.channel.sms.provider.TwilioSmsGatewayIntegrationTest" time="2.006" tests="4" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="21"/>
     <property name="sun.cpu.isalist" value="amd64"/>
@@ -44,8 +44,11 @@
     <property name="java.vm.name" value="Java HotSpot(TM) 64-Bit Server VM"/>
     <property name="maven.ext.class.path" value="E:\intellij\IntelliJ IDEA 2026.1.4\plugins\maven\lib\intellij.maven.rt\maven-event-listener.jar"/>
     <property name="localRepository" value="C:\Users\shohi\.m2\repository"/>
+    <property name="javax.xml.xpath.XPathFactory:http://java.sun.com/jaxp/xpath/dom" value="com.sun.org.apache.xpath.internal.jaxp.XPathFactoryImpl"/>
     <property name="java.vendor.url.bug" value="https://bugreport.java.com/bugreport/"/>
+    <property name="jetty.git.hash" value="922f8dc188f7011e60d0361de585fd4ac4d63064"/>
     <property name="java.io.tmpdir" value="C:\Users\shohi\AppData\Local\Temp\"/>
+    <property name="wiremock.org.eclipse.jetty.http.HttpGenerator.STRICT" value="true"/>
     <property name="idea.version" value="2026.1.4"/>
     <property name="java.version" value="21.0.11"/>
     <property name="user.dir" value="E:\Spring Task\studio-butterfly-java-assignment\formwork-channel-sms"/>
@@ -61,19 +64,23 @@
     <property name="java.vm.version" value="21.0.11+9-LTS-211"/>
     <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
     <property name="maven.repo.local" value="C:\Users\shohi\.m2\repository"/>
+    <property name="javax.xml.transform.TransformerFactory" value="com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl"/>
     <property name="java.class.version" value="65.0"/>
   </properties>
-  <testcase name="recordCost_ZeroSegments_DefaultsToOne" classname="one.formwork.channel.sms.cost.SmsCostServiceTest$RecordCost" time="0.005">
-    <system-out><![CDATA[07:21:13.316 [main] INFO one.formwork.channel.sms.cost.SmsCostService -- SMS cost recorded: tenant=cab844db-de05-4828-958a-7b29f4daeebf, provider=TWILIO, cost=0.075 EUR, segments=1
+  <testcase name="send_Success_VerifiesCorrectHttpRequest" classname="one.formwork.channel.sms.provider.TwilioSmsGatewayIntegrationTest" time="1.894">
+    <system-out><![CDATA[07:21:15.541 [main] INFO one.formwork.channel.sms.provider.TwilioSmsGateway -- Twilio SMS sent: sid=SM123, to=+4915112345678
 ]]></system-out>
   </testcase>
-  <testcase name="recordCost_MasksRecipient" classname="one.formwork.channel.sms.cost.SmsCostServiceTest$RecordCost" time="0.005">
-    <system-out><![CDATA[07:21:13.320 [main] INFO one.formwork.channel.sms.cost.SmsCostService -- SMS cost recorded: tenant=9ed19df2-eecf-408e-b4dd-bd0e6e621570, provider=TWILIO, cost=0.07 EUR, segments=1
+  <testcase name="send_ErrorResponse_ReturnsFailure" classname="one.formwork.channel.sms.provider.TwilioSmsGatewayIntegrationTest" time="0.055">
+    <system-out><![CDATA[07:21:15.611 [main] ERROR one.formwork.channel.sms.provider.TwilioSmsGateway -- Twilio API error: status=400 BAD_REQUEST, body={"code":21211,"message":"Invalid phone number"}
 ]]></system-out>
   </testcase>
-  <testcase name="recordCost_FailedSms_ReturnsNull" classname="one.formwork.channel.sms.cost.SmsCostServiceTest$RecordCost" time="0.002"/>
-  <testcase name="recordCost_SuccessfulSms_SavesCostRecord" classname="one.formwork.channel.sms.cost.SmsCostServiceTest$RecordCost" time="0.003">
-    <system-out><![CDATA[07:21:13.328 [main] INFO one.formwork.channel.sms.cost.SmsCostService -- SMS cost recorded: tenant=2c93229e-031d-4770-b131-07a5485576ce, provider=TWILIO, cost=0.150 EUR, segments=2
+  <testcase name="send_MultiSegmentMessage_ReturnsCorrectSegmentCount" classname="one.formwork.channel.sms.provider.TwilioSmsGatewayIntegrationTest" time="0.027">
+    <system-out><![CDATA[07:21:15.639 [main] INFO one.formwork.channel.sms.provider.TwilioSmsGateway -- Twilio SMS sent: sid=SM789, to=+4915112345678
+]]></system-out>
+  </testcase>
+  <testcase name="send_VerifiesAuthHeaderFormat" classname="one.formwork.channel.sms.provider.TwilioSmsGatewayIntegrationTest" time="0.027">
+    <system-out><![CDATA[07:21:15.667 [main] INFO one.formwork.channel.sms.provider.TwilioSmsGateway -- Twilio SMS sent: sid=SM456, to=+4915112345678
 ]]></system-out>
   </testcase>
 </testsuite>

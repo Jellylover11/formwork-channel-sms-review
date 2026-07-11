@@ -16,6 +16,7 @@ E:\Spring Task\studio-butterfly-java-assignment\formwork-channel-sms\src\test\ja
 E:\Spring Task\studio-butterfly-java-assignment\formwork-channel-sms\src\test\java\one\formwork\channel\sms\provider\BudgetSmsGatewayWireMockTest.java
 E:\Spring Task\studio-butterfly-java-assignment\formwork-channel-sms\src\test\java\one\formwork\channel\sms\provider\MessageBirdSmsGatewayTest.java
 E:\Spring Task\studio-butterfly-java-assignment\formwork-channel-sms\src\test\java\one\formwork\channel\sms\provider\MessageBirdSmsGatewayWireMockTest.java
+E:\Spring Task\studio-butterfly-java-assignment\formwork-channel-sms\src\test\java\one\formwork\channel\sms\provider\TwilioSmsGatewayIntegrationTest.java
 E:\Spring Task\studio-butterfly-java-assignment\formwork-channel-sms\src\test\java\one\formwork\channel\sms\provider\TwilioSmsGatewayTest.java
 E:\Spring Task\studio-butterfly-java-assignment\formwork-channel-sms\src\test\java\one\formwork\channel\sms\provider\TwilioSmsGatewayWireMockTest.java
 E:\Spring Task\studio-butterfly-java-assignment\formwork-channel-sms\src\test\java\one\formwork\channel\sms\provider\VonageSmsGatewayTest.java

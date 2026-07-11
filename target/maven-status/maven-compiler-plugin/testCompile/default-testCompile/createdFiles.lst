@@ -40,5 +40,6 @@ one\formwork\channel\sms\cost\SmsCostEntityTest.class
 one\formwork\channel\sms\api\SmsResultTest.class
 one\formwork\channel\sms\cost\SmsCostServiceTest$ExtractCountryCode.class
 one\formwork\channel\sms\cost\SmsCostServiceTest.class
+one\formwork\channel\sms\provider\TwilioSmsGatewayIntegrationTest.class
 one\formwork\channel\sms\cost\SmsCostServiceExtractCountryCodeTest.class
 one\formwork\channel\sms\validation\PhoneNumberValidatorTest.class

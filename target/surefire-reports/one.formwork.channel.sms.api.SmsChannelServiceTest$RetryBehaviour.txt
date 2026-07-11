@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: one.formwork.channel.sms.api.SmsChannelServiceTest$RetryBehaviour
+-------------------------------------------------------------------------------
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.460 s -- in one.formwork.channel.sms.api.SmsChannelServiceTest$RetryBehaviour

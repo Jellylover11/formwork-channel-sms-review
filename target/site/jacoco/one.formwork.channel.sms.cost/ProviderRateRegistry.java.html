@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProviderRateRegistry.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Formwork — SmsChannel</a> &gt; <a href="index.source.html" class="el_package">one.formwork.channel.sms.cost</a> &gt; <span class="el_source">ProviderRateRegistry.java</span></div><h1>ProviderRateRegistry.java</h1><pre class="source lang-java linenums">package one.formwork.channel.sms.cost;
+
+import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * SK-11: Registry for per-provider, per-country SMS rates.
+ * Defaults to standard EUR rates; can be overridden at runtime.
+ */
+@Component
+public class ProviderRateRegistry {
+
+<span class="fc" id="L16">    private static final BigDecimal DEFAULT_RATE = new BigDecimal(&quot;0.07&quot;);</span>
+
+    /** Key format: &quot;PROVIDER::COUNTRY_CODE&quot; */
+<span class="fc" id="L19">    private final Map&lt;String, BigDecimal&gt; rates = new ConcurrentHashMap&lt;&gt;();</span>
+
+<span class="fc" id="L21">    public ProviderRateRegistry() {</span>
+        // Default rates per provider for Germany
+<span class="fc" id="L23">        setRate(&quot;TWILIO&quot;, &quot;DE&quot;, new BigDecimal(&quot;0.0750&quot;));</span>
+<span class="fc" id="L24">        setRate(&quot;VONAGE&quot;, &quot;DE&quot;, new BigDecimal(&quot;0.0650&quot;));</span>
+<span class="fc" id="L25">        setRate(&quot;AWS_SNS&quot;, &quot;DE&quot;, new BigDecimal(&quot;0.0460&quot;));</span>
+<span class="fc" id="L26">        setRate(&quot;BUDGET_SMS&quot;, &quot;DE&quot;, new BigDecimal(&quot;0.0550&quot;));</span>
+<span class="fc" id="L27">        setRate(&quot;MESSAGEBIRD&quot;, &quot;DE&quot;, new BigDecimal(&quot;0.0680&quot;));</span>
+        // US rates
+<span class="fc" id="L29">        setRate(&quot;TWILIO&quot;, &quot;US&quot;, new BigDecimal(&quot;0.0079&quot;));</span>
+<span class="fc" id="L30">        setRate(&quot;VONAGE&quot;, &quot;US&quot;, new BigDecimal(&quot;0.0068&quot;));</span>
+<span class="fc" id="L31">        setRate(&quot;AWS_SNS&quot;, &quot;US&quot;, new BigDecimal(&quot;0.0065&quot;));</span>
+<span class="fc" id="L32">    }</span>
+
+    public BigDecimal getRate(String provider, String countryCode) {
+<span class="fc" id="L35">        BigDecimal rate = rates.get(key(provider, countryCode));</span>
+<span class="fc bfc" id="L36" title="All 2 branches covered.">        if (rate != null) return rate;</span>
+        // Fallback: try provider default
+<span class="fc" id="L38">        rate = rates.get(key(provider, &quot;DEFAULT&quot;));</span>
+<span class="pc bpc" id="L39" title="1 of 2 branches missed.">        return rate != null ? rate : DEFAULT_RATE;</span>
+    }
+
+    public void setRate(String provider, String countryCode, BigDecimal rate) {
+<span class="fc" id="L43">        rates.put(key(provider, countryCode), rate);</span>
+<span class="fc" id="L44">    }</span>
+
+    public Map&lt;String, BigDecimal&gt; getAllRates() {
+<span class="fc" id="L47">        return Map.copyOf(rates);</span>
+    }
+
+    private static String key(String provider, String countryCode) {
+<span class="fc" id="L51">        return provider.toUpperCase() + &quot;::&quot; + countryCode.toUpperCase();</span>
+    }
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

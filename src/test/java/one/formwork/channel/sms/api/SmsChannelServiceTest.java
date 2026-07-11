@@ -1,6 +1,9 @@
 package one.formwork.channel.sms.api;
 
 import one.formwork.channel.sms.api.TenantSmsProviderRegistry;
+import one.formwork.channel.sms.api.SmsChannelProperties.RetryProperties;
+import java.time.Duration;
+import static org.mockito.Mockito.lenient;
 import one.formwork.channel.sms.cost.SmsCostService;
 import java.util.UUID;
 import one.formwork.channel.sms.validation.PhoneNumberValidator.InvalidPhoneNumberException;
@@ -41,6 +44,8 @@ class SmsChannelServiceTest {
 
     @BeforeEach
     void setUp() {
+        SmsChannelProperties.RetryProperties defaultRetry = new SmsChannelProperties.RetryProperties();
+        lenient().when(properties.getRetry()).thenReturn(defaultRetry);
         service = new SmsChannelService(
                 List.of(twilioGateway, vonageGateway),
                 properties,
@@ -141,6 +146,7 @@ class SmsChannelServiceTest {
         @Test
         void sendBulk_MultipleMessages_SendsEachIndividually() {
             when(properties.getProvider()).thenReturn("TWILIO");
+            when(properties.getRetry()).thenReturn(retryPropsMillis());
             when(twilioGateway.supports("TWILIO")).thenReturn(true);
             SmsResult success = SmsResult.success("msg-1", "TWILIO", 1);
             when(twilioGateway.send(any(SmsMessage.class))).thenReturn(success);
@@ -165,6 +171,7 @@ class SmsChannelServiceTest {
 
         @Test
         void sendSms_SuccessfulSend_RecordsCost() {
+            when(properties.getRetry()).thenReturn(retryPropsMillis());
             when(properties.getProvider()).thenReturn("TWILIO");
             when(twilioGateway.supports("TWILIO")).thenReturn(true);
             SmsResult success = SmsResult.success("msg-123", "TWILIO", 1);
@@ -178,6 +185,7 @@ class SmsChannelServiceTest {
 
         @Test
         void sendSms_FailedSend_DoesNotRecordCost() {
+            when(properties.getRetry()).thenReturn(retryPropsMillis());
             when(properties.getProvider()).thenReturn("TWILIO");
             when(twilioGateway.supports("TWILIO")).thenReturn(true);
             SmsResult failure = SmsResult.failure("TWILIO", "500", "provider error");
@@ -188,6 +196,13 @@ class SmsChannelServiceTest {
 
             verify(costService, never()).recordCost(any(), any(), any());
         }
+
+        private SmsChannelProperties.RetryProperties retryPropsMillis() {
+            SmsChannelProperties.RetryProperties props = new SmsChannelProperties.RetryProperties();
+            props.setMaxAttempts(1);
+            props.setBackoff(java.time.Duration.ofMillis(1));
+            return props;
+        }
     }
 
     @Nested
@@ -197,6 +212,75 @@ class SmsChannelServiceTest {
         void handleDeliveryCallback_AnyInput_DoesNotThrow() {
             assertDoesNotThrow(() ->
                     service.handleDeliveryCallback("TWILIO", Map.of("status", "delivered")));
+        }
+    }
+
+    @Nested
+    class RetryBehaviour {
+
+        @Test
+        void sendSms_TransientFailureThenSuccess_RetriesAndSucceeds() {
+            when(properties.getProvider()).thenReturn("TWILIO");
+            when(properties.getRetry()).thenReturn(retryProps(3, Duration.ofMillis(10)));
+            when(tenantRegistry.getProviderFor(tenantId)).thenReturn(java.util.Optional.empty());
+            when(twilioGateway.supports("TWILIO")).thenReturn(true);
+
+            SmsResult failure = SmsResult.failure("TWILIO", "TRANSIENT", "timeout");
+            SmsResult success = SmsResult.success("msg-retry", "TWILIO", 1);
+
+            when(twilioGateway.send(any(SmsMessage.class)))
+                    .thenReturn(failure)
+                    .thenReturn(failure)
+                    .thenReturn(success);
+
+            SmsMessage message = new SmsMessage("+4915112345678", "Hello", tenantId);
+            SmsResult result = service.sendSms(message);
+
+            assertTrue(result.isSuccess());
+            verify(twilioGateway, times(3)).send(message);
+            verify(costService).recordCost(tenantId, "+4915112345678", success);
+        }
+
+        @Test
+        void sendSms_AllAttemptsExhausted_ReturnsLastFailure() {
+            when(properties.getProvider()).thenReturn("TWILIO");
+            when(properties.getRetry()).thenReturn(retryProps(3, Duration.ofMillis(10)));
+            when(tenantRegistry.getProviderFor(tenantId)).thenReturn(java.util.Optional.empty());
+            when(twilioGateway.supports("TWILIO")).thenReturn(true);
+
+            SmsResult failure = SmsResult.failure("TWILIO", "TRANSIENT", "timeout");
+            when(twilioGateway.send(any(SmsMessage.class))).thenReturn(failure);
+
+            SmsMessage message = new SmsMessage("+4915112345678", "Hello", tenantId);
+            SmsResult result = service.sendSms(message);
+
+            assertFalse(result.isSuccess());
+            verify(twilioGateway, times(3)).send(message);
+            verify(costService, never()).recordCost(any(), any(), any());
+        }
+
+        @Test
+        void sendSms_PermanentFailure_DoesNotRetry() {
+            when(properties.getProvider()).thenReturn("TWILIO");
+            when(properties.getRetry()).thenReturn(retryProps(3, Duration.ofMillis(10)));
+            when(tenantRegistry.getProviderFor(tenantId)).thenReturn(java.util.Optional.empty());
+            when(twilioGateway.supports("TWILIO")).thenReturn(true);
+
+            SmsResult permanentFailure = SmsResult.failure("TWILIO", "21211", "Invalid phone number");
+            when(twilioGateway.send(any(SmsMessage.class))).thenReturn(permanentFailure);
+
+            SmsMessage message = new SmsMessage("+4915112345678", "Hello", tenantId);
+            SmsResult result = service.sendSms(message);
+
+            assertFalse(result.isSuccess());
+            verify(twilioGateway, times(1)).send(message);
+        }
+
+        private RetryProperties retryProps(int maxAttempts, Duration backoff) {
+            RetryProperties props = new RetryProperties();
+            props.setMaxAttempts(maxAttempts);
+            props.setBackoff(backoff);
+            return props;
         }
     }
 }

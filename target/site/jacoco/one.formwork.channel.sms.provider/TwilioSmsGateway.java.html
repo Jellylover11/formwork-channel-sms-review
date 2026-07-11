@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TwilioSmsGateway.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Formwork — SmsChannel</a> &gt; <a href="index.source.html" class="el_package">one.formwork.channel.sms.provider</a> &gt; <span class="el_source">TwilioSmsGateway.java</span></div><h1>TwilioSmsGateway.java</h1><pre class="source lang-java linenums">package one.formwork.channel.sms.provider;
+
+import one.formwork.channel.sms.api.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Map;
+
+public class TwilioSmsGateway implements SmsGateway {
+
+<span class="fc" id="L17">    private static final Logger log = LoggerFactory.getLogger(TwilioSmsGateway.class);</span>
+    private static final String TWILIO_API_URL = &quot;https://api.twilio.com/2010-04-01&quot;;
+
+    private final WebClient webClient;
+    private final SmsChannelProperties.TwilioProperties config;
+
+<span class="fc" id="L23">    public TwilioSmsGateway(SmsChannelProperties.TwilioProperties config) {</span>
+<span class="fc" id="L24">        this.config = config;</span>
+<span class="fc" id="L25">        String credentials = Base64.getEncoder().encodeToString(</span>
+<span class="fc" id="L26">                (config.getAccountSid() + &quot;:&quot; + config.getAuthToken()).getBytes(StandardCharsets.UTF_8));</span>
+<span class="fc" id="L27">        this.webClient = WebClient.builder()</span>
+<span class="fc" id="L28">                .baseUrl(TWILIO_API_URL)</span>
+<span class="fc" id="L29">                .defaultHeader(&quot;Authorization&quot;, &quot;Basic &quot; + credentials)</span>
+<span class="fc" id="L30">                .build();</span>
+<span class="fc" id="L31">    }</span>
+
+    @Override
+    public SmsResult send(SmsMessage message) {
+        try {
+<span class="fc" id="L36">            String formBody = &quot;To=&quot; + encode(message.to())</span>
+<span class="fc" id="L37">                    + &quot;&amp;From=&quot; + encode(config.getFromNumber())</span>
+<span class="fc" id="L38">                    + &quot;&amp;Body=&quot; + encode(message.body());</span>
+
+<span class="fc" id="L40">            Map&lt;?, ?&gt; response = webClient.post()</span>
+<span class="fc" id="L41">                    .uri(&quot;/Accounts/{sid}/Messages.json&quot;, config.getAccountSid())</span>
+<span class="fc" id="L42">                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)</span>
+<span class="fc" id="L43">                    .bodyValue(formBody)</span>
+<span class="fc" id="L44">                    .retrieve()</span>
+<span class="fc" id="L45">                    .bodyToMono(Map.class)</span>
+<span class="fc" id="L46">                    .block();</span>
+
+<span class="pc bpc" id="L48" title="1 of 2 branches missed.">            String sid = response != null ? String.valueOf(response.get(&quot;sid&quot;)) : null;</span>
+<span class="fc" id="L49">            int segments = 1;</span>
+<span class="pc bpc" id="L50" title="2 of 4 branches missed.">            if (response != null &amp;&amp; response.get(&quot;num_segments&quot;) != null) {</span>
+<span class="fc" id="L51">                segments = Integer.parseInt(String.valueOf(response.get(&quot;num_segments&quot;)));</span>
+            }
+
+<span class="fc" id="L54">            log.info(&quot;Twilio SMS sent: sid={}, to={}&quot;, sid, message.to());</span>
+<span class="fc" id="L55">            return SmsResult.success(sid, &quot;TWILIO&quot;, segments);</span>
+<span class="fc" id="L56">        } catch (WebClientResponseException e) {</span>
+<span class="fc" id="L57">            log.error(&quot;Twilio API error: status={}, body={}&quot;, e.getStatusCode(), e.getResponseBodyAsString());</span>
+<span class="fc" id="L58">            return SmsResult.failure(&quot;TWILIO&quot;, String.valueOf(e.getStatusCode().value()), e.getResponseBodyAsString());</span>
+<span class="fc" id="L59">        } catch (Exception e) {</span>
+<span class="fc" id="L60">            log.error(&quot;Twilio SMS send failed: {}&quot;, e.getMessage(), e);</span>
+<span class="fc" id="L61">            return SmsResult.failure(&quot;TWILIO&quot;, &quot;SEND_ERROR&quot;, e.getMessage());</span>
+        }
+    }
+
+    @Override
+    public boolean supports(String providerType) {
+<span class="fc" id="L67">        return &quot;TWILIO&quot;.equalsIgnoreCase(providerType);</span>
+    }
+
+    @Override
+    public String getProviderName() {
+<span class="fc" id="L72">        return &quot;TWILIO&quot;;</span>
+    }
+
+    private static String encode(String value) {
+<span class="fc" id="L76">        return URLEncoder.encode(value, StandardCharsets.UTF_8);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

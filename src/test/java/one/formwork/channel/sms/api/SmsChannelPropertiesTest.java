@@ -153,16 +153,16 @@ class SmsChannelPropertiesTest {
         void retry_Defaults_AreCorrect() {
             SmsChannelProperties.RetryProperties retry = new SmsChannelProperties.RetryProperties();
             assertEquals(3, retry.getMaxAttempts());
-            assertEquals("5s", retry.getBackoff());
+            assertEquals(java.time.Duration.ofSeconds(5), retry.getBackoff());
         }
 
         @Test
         void retry_CustomValues_AreApplied() {
             SmsChannelProperties.RetryProperties retry = new SmsChannelProperties.RetryProperties();
             retry.setMaxAttempts(5);
-            retry.setBackoff("10s");
+            retry.setBackoff(java.time.Duration.ofSeconds(10));
             assertEquals(5, retry.getMaxAttempts());
-            assertEquals("10s", retry.getBackoff());
+            assertEquals(java.time.Duration.ofSeconds(10), retry.getBackoff());
         }
     }
 }

@@ -1,6 +1,7 @@
 one\formwork\channel\sms\api\SmsChannelServiceTest$HandleDeliveryCallback.class
 one\formwork\channel\sms\api\SmsChannelServiceTest$SendSms.class
 one\formwork\channel\sms\cost\ProviderRateRegistryTest$GetRate.class
+one\formwork\channel\sms\api\SmsChannelServiceTest$RetryBehaviour.class
 one\formwork\channel\sms\validation\PhoneNumberValidatorTest$InvalidNumbers.class
 one\formwork\channel\sms\api\SmsChannelPropertiesTest$TwilioPropertiesTest.class
 one\formwork\channel\sms\provider\MessageBirdSmsGatewayWireMockTest.class

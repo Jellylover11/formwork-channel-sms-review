@@ -56,8 +56,12 @@ public class SmsChannelProperties {
         public String getOriginator() { return originator; } public void setOriginator(String s) { this.originator = s; }
     }
     public static class RetryProperties {
-        private int maxAttempts = 3; private String backoff = "5s";
-        public int getMaxAttempts() { return maxAttempts; } public void setMaxAttempts(int m) { this.maxAttempts = m; }
-        public String getBackoff() { return backoff; } public void setBackoff(String b) { this.backoff = b; }
+        private int maxAttempts = 3;
+        private java.time.Duration backoff = java.time.Duration.ofSeconds(5);
+
+        public int getMaxAttempts() { return maxAttempts; }
+        public void setMaxAttempts(int m) { this.maxAttempts = m; }
+        public java.time.Duration getBackoff() { return backoff; }
+        public void setBackoff(java.time.Duration b) { this.backoff = b; }
     }
 }

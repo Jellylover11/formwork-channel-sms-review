@@ -26,7 +26,7 @@ class AwsSnsSmsGatewayExtraTest {
         // This test works in CI where AWS_ACCESS_KEY_ID is not set
         String accessKey = System.getenv("AWS_ACCESS_KEY_ID");
         if (accessKey == null) {
-            SmsResult result = gateway.send(new SmsMessage("+49151", "Test", tenantId));
+            SmsResult result = gateway.send(new SmsMessage("+4915112345678", "Test", tenantId));
             assertFalse(result.isSuccess());
             assertEquals("AWS_SNS", result.provider());
             assertEquals("CONFIG_ERROR", result.errorCode());

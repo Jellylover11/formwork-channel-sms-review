@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: one.formwork.channel.sms.validation.PhoneNumberValidatorTest
 -------------------------------------------------------------------------------
-Tests run: 0, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.022 s -- in one.formwork.channel.sms.validation.PhoneNumberValidatorTest
+Tests run: 0, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.048 s -- in one.formwork.channel.sms.validation.PhoneNumberValidatorTest

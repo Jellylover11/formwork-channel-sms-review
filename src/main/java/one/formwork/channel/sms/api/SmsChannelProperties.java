@@ -40,9 +40,19 @@ public class SmsChannelProperties {
         public String getFromNumber() { return fromNumber; } public void setFromNumber(String s) { this.fromNumber = s; }
     }
     public static class AwsSnsProperties {
-        private String region = "eu-central-1"; private String senderId;
-        public String getRegion() { return region; } public void setRegion(String s) { this.region = s; }
-        public String getSenderId() { return senderId; } public void setSenderId(String s) { this.senderId = s; }
+        private String region = "eu-central-1";
+        private String senderId;
+        private String accessKey;
+        private String secretKey;
+
+        public String getRegion() { return region; }
+        public void setRegion(String s) { this.region = s; }
+        public String getSenderId() { return senderId; }
+        public void setSenderId(String s) { this.senderId = s; }
+        public String getAccessKey() { return accessKey; }
+        public void setAccessKey(String s) { this.accessKey = s; }
+        public String getSecretKey() { return secretKey; }
+        public void setSecretKey(String s) { this.secretKey = s; }
     }
     public static class BudgetSmsProperties {
         private String username; private String password; private String originator;

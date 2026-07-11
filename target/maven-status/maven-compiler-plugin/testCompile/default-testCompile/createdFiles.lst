@@ -19,6 +19,7 @@ one\formwork\channel\sms\cost\SmsCostEntityExtraTest.class
 one\formwork\channel\sms\provider\TwilioSmsGatewayTest.class
 one\formwork\channel\sms\provider\AwsSnsSmsGatewayExtraTest.class
 one\formwork\channel\sms\cost\SmsCostServiceTest$MaskRecipient.class
+one\formwork\channel\sms\provider\AwsSnsSmsGatewaySigningTest.class
 one\formwork\channel\sms\api\SmsChannelServiceTest$SendBulk.class
 one\formwork\channel\sms\cost\ProviderRateRegistryTest.class
 one\formwork\channel\sms\cost\SmsCostEntityOnCreateTest.class

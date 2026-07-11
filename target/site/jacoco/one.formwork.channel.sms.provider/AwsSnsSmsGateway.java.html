@@ -37,134 +37,157 @@ public class AwsSnsSmsGateway implements SmsGateway {
 <span class="fc" id="L37">        this.webClient = WebClient.builder().build();</span>
 <span class="fc" id="L38">    }</span>
 
+<span class="fc" id="L40">    AwsSnsSmsGateway(SmsChannelProperties.AwsSnsProperties config, WebClient webClient) {</span>
+<span class="fc" id="L41">        this.config = config;</span>
+<span class="fc" id="L42">        this.webClient = webClient;</span>
+<span class="fc" id="L43">    }</span>
+
     @Override
     public SmsResult send(SmsMessage message) {
-<span class="fc" id="L42">        String region = config.getRegion();</span>
-<span class="fc" id="L43">        String host = &quot;sns.&quot; + region + &quot;.amazonaws.com&quot;;</span>
-<span class="fc" id="L44">        String endpoint = &quot;https://&quot; + host;</span>
+<span class="fc" id="L47">        String region = config.getRegion();</span>
+<span class="fc" id="L48">        String host = &quot;sns.&quot; + region + &quot;.amazonaws.com&quot;;</span>
 
-<span class="fc" id="L46">        TreeMap&lt;String, String&gt; params = new TreeMap&lt;&gt;();</span>
-<span class="fc" id="L47">        params.put(&quot;Action&quot;, &quot;Publish&quot;);</span>
-<span class="fc" id="L48">        params.put(&quot;Message&quot;, message.body());</span>
-<span class="fc" id="L49">        params.put(&quot;PhoneNumber&quot;, message.to());</span>
-<span class="fc" id="L50">        params.put(&quot;Version&quot;, &quot;2010-03-31&quot;);</span>
-<span class="pc bpc" id="L51" title="2 of 4 branches missed.">        if (config.getSenderId() != null &amp;&amp; !config.getSenderId().isBlank()) {</span>
-<span class="fc" id="L52">            params.put(&quot;MessageAttributes.entry.1.Name&quot;, &quot;AWS.SNS.SMS.SenderID&quot;);</span>
-<span class="fc" id="L53">            params.put(&quot;MessageAttributes.entry.1.Value.DataType&quot;, &quot;String&quot;);</span>
-<span class="fc" id="L54">            params.put(&quot;MessageAttributes.entry.1.Value.StringValue&quot;, config.getSenderId());</span>
+<span class="fc" id="L50">        TreeMap&lt;String, String&gt; params = new TreeMap&lt;&gt;();</span>
+<span class="fc" id="L51">        params.put(&quot;Action&quot;, &quot;Publish&quot;);</span>
+<span class="fc" id="L52">        params.put(&quot;Message&quot;, message.body());</span>
+<span class="fc" id="L53">        params.put(&quot;PhoneNumber&quot;, message.to());</span>
+<span class="fc" id="L54">        params.put(&quot;Version&quot;, &quot;2010-03-31&quot;);</span>
+<span class="pc bpc" id="L55" title="2 of 4 branches missed.">        if (config.getSenderId() != null &amp;&amp; !config.getSenderId().isBlank()) {</span>
+<span class="fc" id="L56">            params.put(&quot;MessageAttributes.entry.1.Name&quot;, &quot;AWS.SNS.SMS.SenderID&quot;);</span>
+<span class="fc" id="L57">            params.put(&quot;MessageAttributes.entry.1.Value.DataType&quot;, &quot;String&quot;);</span>
+<span class="fc" id="L58">            params.put(&quot;MessageAttributes.entry.1.Value.StringValue&quot;, config.getSenderId());</span>
         }
 
-<span class="fc" id="L57">        String queryString = params.entrySet().stream()</span>
-<span class="fc" id="L58">                .map(e -&gt; encode(e.getKey()) + &quot;=&quot; + encode(e.getValue()))</span>
-<span class="fc" id="L59">                .reduce((a, b) -&gt; a + &quot;&amp;&quot; + b)</span>
-<span class="fc" id="L60">                .orElse(&quot;&quot;);</span>
+        // Build form body for POST request
+<span class="fc" id="L62">        String formBody = params.entrySet().stream()</span>
+<span class="fc" id="L63">                .map(e -&gt; encode(e.getKey()) + &quot;=&quot; + encode(e.getValue()))</span>
+<span class="fc" id="L64">                .reduce((a, b) -&gt; a + &quot;&amp;&quot; + b)</span>
+<span class="fc" id="L65">                .orElse(&quot;&quot;);</span>
 
         try {
-<span class="fc" id="L63">            String accessKey = System.getenv(&quot;AWS_ACCESS_KEY_ID&quot;);</span>
-<span class="fc" id="L64">            String secretKey = System.getenv(&quot;AWS_SECRET_ACCESS_KEY&quot;);</span>
-<span class="pc bpc" id="L65" title="3 of 4 branches missed.">            if (accessKey == null || secretKey == null) {</span>
-<span class="fc" id="L66">                return SmsResult.failure(&quot;AWS_SNS&quot;, &quot;CONFIG_ERROR&quot;,</span>
-                        &quot;AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables required&quot;);
+            // Fix Finding 8: read credentials from config first, fall back to env vars
+<span class="pc bpc" id="L69" title="1 of 4 branches missed.">            String accessKey = (config.getAccessKey() != null &amp;&amp; !config.getAccessKey().isBlank())</span>
+<span class="fc" id="L70">                    ? config.getAccessKey()</span>
+<span class="fc" id="L71">                    : System.getenv(&quot;AWS_ACCESS_KEY_ID&quot;);</span>
+<span class="pc bpc" id="L72" title="1 of 4 branches missed.">            String secretKey = (config.getSecretKey() != null &amp;&amp; !config.getSecretKey().isBlank())</span>
+<span class="fc" id="L73">                    ? config.getSecretKey()</span>
+<span class="fc" id="L74">                    : System.getenv(&quot;AWS_SECRET_ACCESS_KEY&quot;);</span>
+
+<span class="pc bpc" id="L76" title="1 of 4 branches missed.">            if (accessKey == null || secretKey == null) {</span>
+<span class="fc" id="L77">                return SmsResult.failure(&quot;AWS_SNS&quot;, &quot;CONFIG_ERROR&quot;,</span>
+                        &quot;AWS credentials required via config or environment variables&quot;);
             }
 
-<span class="nc" id="L70">            ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);</span>
-<span class="nc" id="L71">            String amzDate = now.format(AMZ_DATE_FMT);</span>
-<span class="nc" id="L72">            String dateStamp = now.format(DATE_STAMP_FMT);</span>
+<span class="fc" id="L81">            ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);</span>
+<span class="fc" id="L82">            String amzDate = now.format(AMZ_DATE_FMT);</span>
+<span class="fc" id="L83">            String dateStamp = now.format(DATE_STAMP_FMT);</span>
 
-<span class="nc" id="L74">            String canonicalHeaders = &quot;host:&quot; + host + &quot;\nx-amz-date:&quot; + amzDate + &quot;\n&quot;;</span>
-<span class="nc" id="L75">            String signedHeaders = &quot;host;x-amz-date&quot;;</span>
-<span class="nc" id="L76">            String payloadHash = sha256Hex(&quot;&quot;);</span>
-<span class="nc" id="L77">            String canonicalRequest = &quot;GET\n/\n&quot; + queryString + &quot;\n&quot; + canonicalHeaders + &quot;\n&quot;</span>
-                    + signedHeaders + &quot;\n&quot; + payloadHash;
+            // Fix Finding 3: payload hash must be hash of form body not empty string
+<span class="fc" id="L86">            String payloadHash = sha256Hex(formBody);</span>
 
-<span class="nc" id="L80">            String credentialScope = dateStamp + &quot;/&quot; + region + &quot;/&quot; + SERVICE + &quot;/aws4_request&quot;;</span>
-<span class="nc" id="L81">            String stringToSign = &quot;AWS4-HMAC-SHA256\n&quot; + amzDate + &quot;\n&quot; + credentialScope + &quot;\n&quot;</span>
-<span class="nc" id="L82">                    + sha256Hex(canonicalRequest);</span>
+            // Fix Finding 2: method is POST not GET
+            // content-type must be included in signed headers for POST
+<span class="fc" id="L90">            String canonicalHeaders = &quot;content-type:application/x-www-form-urlencoded\n&quot;</span>
+                    + &quot;host:&quot; + host + &quot;\n&quot;
+                    + &quot;x-amz-date:&quot; + amzDate + &quot;\n&quot;;
+<span class="fc" id="L93">            String signedHeaders = &quot;content-type;host;x-amz-date&quot;;</span>
 
-<span class="nc" id="L84">            byte[] signingKey = deriveSigningKey(secretKey, dateStamp, region, SERVICE);</span>
-<span class="nc" id="L85">            String signature = hexEncode(hmacSha256(signingKey, stringToSign));</span>
-<span class="nc" id="L86">            String authorization = &quot;AWS4-HMAC-SHA256 Credential=&quot; + accessKey + &quot;/&quot; + credentialScope</span>
+<span class="fc" id="L95">            String canonicalRequest = &quot;POST\n/\n\n&quot;</span>
+                    + canonicalHeaders + &quot;\n&quot;
+                    + signedHeaders + &quot;\n&quot;
+                    + payloadHash;
+
+<span class="fc" id="L100">            String credentialScope = dateStamp + &quot;/&quot; + region + &quot;/&quot; + SERVICE + &quot;/aws4_request&quot;;</span>
+<span class="fc" id="L101">            String stringToSign = &quot;AWS4-HMAC-SHA256\n&quot; + amzDate + &quot;\n&quot; + credentialScope + &quot;\n&quot;</span>
+<span class="fc" id="L102">                    + sha256Hex(canonicalRequest);</span>
+
+<span class="fc" id="L104">            byte[] signingKey = deriveSigningKey(secretKey, dateStamp, region, SERVICE);</span>
+<span class="fc" id="L105">            String signature = hexEncode(hmacSha256(signingKey, stringToSign));</span>
+<span class="fc" id="L106">            String authorization = &quot;AWS4-HMAC-SHA256 Credential=&quot; + accessKey + &quot;/&quot; + credentialScope</span>
                     + &quot;, SignedHeaders=&quot; + signedHeaders + &quot;, Signature=&quot; + signature;
 
-<span class="nc" id="L89">            String responseBody = webClient.get()</span>
-<span class="nc" id="L90">                    .uri(endpoint + &quot;/?&quot; + queryString)</span>
-<span class="nc" id="L91">                    .header(&quot;Authorization&quot;, authorization)</span>
-<span class="nc" id="L92">                    .header(&quot;x-amz-date&quot;, amzDate)</span>
-<span class="nc" id="L93">                    .retrieve()</span>
-<span class="nc" id="L94">                    .bodyToMono(String.class)</span>
-<span class="nc" id="L95">                    .block();</span>
+            // Fix Finding 2: use POST with form body not GET with query string
+<span class="fc" id="L110">            String responseBody = webClient.post()</span>
+<span class="fc" id="L111">                    .uri(&quot;/&quot;)</span>
+<span class="fc" id="L112">                    .header(&quot;Authorization&quot;, authorization)</span>
+<span class="fc" id="L113">                    .header(&quot;x-amz-date&quot;, amzDate)</span>
+<span class="fc" id="L114">                    .contentType(org.springframework.http.MediaType.APPLICATION_FORM_URLENCODED)</span>
+<span class="fc" id="L115">                    .bodyValue(formBody)</span>
+<span class="fc" id="L116">                    .retrieve()</span>
+<span class="fc" id="L117">                    .bodyToMono(String.class)</span>
+<span class="fc" id="L118">                    .block();</span>
 
-            // SNS returns XML; extract MessageId
-<span class="nc" id="L98">            String messageId = extractXmlElement(responseBody, &quot;MessageId&quot;);</span>
-<span class="nc" id="L99">            log.info(&quot;AWS SNS SMS sent: messageId={}, to={}&quot;, messageId, message.to());</span>
-<span class="nc" id="L100">            return SmsResult.success(messageId, &quot;AWS_SNS&quot;, 1);</span>
-<span class="nc" id="L101">        } catch (WebClientResponseException e) {</span>
-<span class="nc" id="L102">            log.error(&quot;AWS SNS API error: status={}, body={}&quot;, e.getStatusCode(), e.getResponseBodyAsString());</span>
-<span class="nc" id="L103">            return SmsResult.failure(&quot;AWS_SNS&quot;, String.valueOf(e.getStatusCode().value()), e.getResponseBodyAsString());</span>
-<span class="nc" id="L104">        } catch (Exception e) {</span>
-<span class="nc" id="L105">            log.error(&quot;AWS SNS SMS send failed: {}&quot;, e.getMessage(), e);</span>
-<span class="nc" id="L106">            return SmsResult.failure(&quot;AWS_SNS&quot;, &quot;SEND_ERROR&quot;, e.getMessage());</span>
+<span class="fc" id="L120">            String messageId = extractXmlElement(responseBody, &quot;MessageId&quot;);</span>
+<span class="fc" id="L121">            log.info(&quot;AWS SNS SMS sent: messageId={}, to={}&quot;, messageId, message.to());</span>
+<span class="fc" id="L122">            return SmsResult.success(messageId, &quot;AWS_SNS&quot;, 1);</span>
+
+<span class="nc" id="L124">        } catch (WebClientResponseException e) {</span>
+<span class="nc" id="L125">            log.error(&quot;AWS SNS API error: status={}, body={}&quot;, e.getStatusCode(), e.getResponseBodyAsString());</span>
+<span class="nc" id="L126">            return SmsResult.failure(&quot;AWS_SNS&quot;, String.valueOf(e.getStatusCode().value()), e.getResponseBodyAsString());</span>
+<span class="nc" id="L127">        } catch (Exception e) {</span>
+<span class="nc" id="L128">            log.error(&quot;AWS SNS SMS send failed: {}&quot;, e.getMessage(), e);</span>
+<span class="nc" id="L129">            return SmsResult.failure(&quot;AWS_SNS&quot;, &quot;SEND_ERROR&quot;, e.getMessage());</span>
         }
     }
 
     @Override
     public boolean supports(String providerType) {
-<span class="fc" id="L112">        return &quot;AWS_SNS&quot;.equalsIgnoreCase(providerType);</span>
+<span class="fc" id="L135">        return &quot;AWS_SNS&quot;.equalsIgnoreCase(providerType);</span>
     }
 
     @Override
     public String getProviderName() {
-<span class="fc" id="L117">        return &quot;AWS_SNS&quot;;</span>
+<span class="fc" id="L140">        return &quot;AWS_SNS&quot;;</span>
     }
 
     private static String encode(String value) {
-<span class="fc" id="L121">        return URLEncoder.encode(value, StandardCharsets.UTF_8);</span>
+<span class="fc" id="L144">        return URLEncoder.encode(value, StandardCharsets.UTF_8);</span>
     }
 
     private static String sha256Hex(String data) {
         try {
-<span class="nc" id="L126">            MessageDigest digest = MessageDigest.getInstance(&quot;SHA-256&quot;);</span>
-<span class="nc" id="L127">            return hexEncode(digest.digest(data.getBytes(StandardCharsets.UTF_8)));</span>
-<span class="nc" id="L128">        } catch (Exception e) {</span>
-<span class="nc" id="L129">            throw new IllegalStateException(&quot;SHA-256 not available&quot;, e);</span>
+<span class="fc" id="L149">            MessageDigest digest = MessageDigest.getInstance(&quot;SHA-256&quot;);</span>
+<span class="fc" id="L150">            return hexEncode(digest.digest(data.getBytes(StandardCharsets.UTF_8)));</span>
+<span class="nc" id="L151">        } catch (Exception e) {</span>
+<span class="nc" id="L152">            throw new IllegalStateException(&quot;SHA-256 not available&quot;, e);</span>
         }
     }
 
     private static byte[] hmacSha256(byte[] key, String data) {
         try {
-<span class="nc" id="L135">            Mac mac = Mac.getInstance(&quot;HmacSHA256&quot;);</span>
-<span class="nc" id="L136">            mac.init(new SecretKeySpec(key, &quot;HmacSHA256&quot;));</span>
-<span class="nc" id="L137">            return mac.doFinal(data.getBytes(StandardCharsets.UTF_8));</span>
-<span class="nc" id="L138">        } catch (Exception e) {</span>
-<span class="nc" id="L139">            throw new IllegalStateException(&quot;HmacSHA256 not available&quot;, e);</span>
+<span class="fc" id="L158">            Mac mac = Mac.getInstance(&quot;HmacSHA256&quot;);</span>
+<span class="fc" id="L159">            mac.init(new SecretKeySpec(key, &quot;HmacSHA256&quot;));</span>
+<span class="fc" id="L160">            return mac.doFinal(data.getBytes(StandardCharsets.UTF_8));</span>
+<span class="nc" id="L161">        } catch (Exception e) {</span>
+<span class="nc" id="L162">            throw new IllegalStateException(&quot;HmacSHA256 not available&quot;, e);</span>
         }
     }
 
     private static byte[] deriveSigningKey(String secret, String dateStamp, String region, String service) {
-<span class="nc" id="L144">        byte[] kDate = hmacSha256((&quot;AWS4&quot; + secret).getBytes(StandardCharsets.UTF_8), dateStamp);</span>
-<span class="nc" id="L145">        byte[] kRegion = hmacSha256(kDate, region);</span>
-<span class="nc" id="L146">        byte[] kService = hmacSha256(kRegion, service);</span>
-<span class="nc" id="L147">        return hmacSha256(kService, &quot;aws4_request&quot;);</span>
+<span class="fc" id="L167">        byte[] kDate = hmacSha256((&quot;AWS4&quot; + secret).getBytes(StandardCharsets.UTF_8), dateStamp);</span>
+<span class="fc" id="L168">        byte[] kRegion = hmacSha256(kDate, region);</span>
+<span class="fc" id="L169">        byte[] kService = hmacSha256(kRegion, service);</span>
+<span class="fc" id="L170">        return hmacSha256(kService, &quot;aws4_request&quot;);</span>
     }
 
     private static String hexEncode(byte[] bytes) {
-<span class="nc" id="L151">        StringBuilder sb = new StringBuilder(bytes.length * 2);</span>
-<span class="nc bnc" id="L152" title="All 2 branches missed.">        for (byte b : bytes) {</span>
-<span class="nc" id="L153">            sb.append(String.format(&quot;%02x&quot;, b));</span>
+<span class="fc" id="L174">        StringBuilder sb = new StringBuilder(bytes.length * 2);</span>
+<span class="fc bfc" id="L175" title="All 2 branches covered.">        for (byte b : bytes) {</span>
+<span class="fc" id="L176">            sb.append(String.format(&quot;%02x&quot;, b));</span>
         }
-<span class="nc" id="L155">        return sb.toString();</span>
+<span class="fc" id="L178">        return sb.toString();</span>
     }
 
     private static String extractXmlElement(String xml, String elementName) {
-<span class="nc bnc" id="L159" title="All 2 branches missed.">        if (xml == null) return null;</span>
-<span class="nc" id="L160">        String startTag = &quot;&lt;&quot; + elementName + &quot;&gt;&quot;;</span>
-<span class="nc" id="L161">        String endTag = &quot;&lt;/&quot; + elementName + &quot;&gt;&quot;;</span>
-<span class="nc" id="L162">        int start = xml.indexOf(startTag);</span>
-<span class="nc" id="L163">        int end = xml.indexOf(endTag);</span>
-<span class="nc bnc" id="L164" title="All 4 branches missed.">        if (start &gt;= 0 &amp;&amp; end &gt; start) {</span>
-<span class="nc" id="L165">            return xml.substring(start + startTag.length(), end);</span>
+<span class="pc bpc" id="L182" title="1 of 2 branches missed.">        if (xml == null) return null;</span>
+<span class="fc" id="L183">        String startTag = &quot;&lt;&quot; + elementName + &quot;&gt;&quot;;</span>
+<span class="fc" id="L184">        String endTag = &quot;&lt;/&quot; + elementName + &quot;&gt;&quot;;</span>
+<span class="fc" id="L185">        int start = xml.indexOf(startTag);</span>
+<span class="fc" id="L186">        int end = xml.indexOf(endTag);</span>
+<span class="pc bpc" id="L187" title="2 of 4 branches missed.">        if (start &gt;= 0 &amp;&amp; end &gt; start) {</span>
+<span class="fc" id="L188">            return xml.substring(start + startTag.length(), end);</span>
         }
-<span class="nc" id="L167">        return null;</span>
+<span class="nc" id="L190">        return null;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

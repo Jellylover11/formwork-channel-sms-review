@@ -37,11 +37,15 @@ public class AwsSnsSmsGateway implements SmsGateway {
         this.webClient = WebClient.builder().build();
     }
 
+    AwsSnsSmsGateway(SmsChannelProperties.AwsSnsProperties config, WebClient webClient) {
+        this.config = config;
+        this.webClient = webClient;
+    }
+
     @Override
     public SmsResult send(SmsMessage message) {
         String region = config.getRegion();
         String host = "sns." + region + ".amazonaws.com";
-        String endpoint = "https://" + host;
 
         TreeMap<String, String> params = new TreeMap<>();
         params.put("Action", "Publish");
@@ -54,28 +58,44 @@ public class AwsSnsSmsGateway implements SmsGateway {
             params.put("MessageAttributes.entry.1.Value.StringValue", config.getSenderId());
         }
 
-        String queryString = params.entrySet().stream()
+        // Build form body for POST request
+        String formBody = params.entrySet().stream()
                 .map(e -> encode(e.getKey()) + "=" + encode(e.getValue()))
                 .reduce((a, b) -> a + "&" + b)
                 .orElse("");
 
         try {
-            String accessKey = System.getenv("AWS_ACCESS_KEY_ID");
-            String secretKey = System.getenv("AWS_SECRET_ACCESS_KEY");
+            // Fix Finding 8: read credentials from config first, fall back to env vars
+            String accessKey = (config.getAccessKey() != null && !config.getAccessKey().isBlank())
+                    ? config.getAccessKey()
+                    : System.getenv("AWS_ACCESS_KEY_ID");
+            String secretKey = (config.getSecretKey() != null && !config.getSecretKey().isBlank())
+                    ? config.getSecretKey()
+                    : System.getenv("AWS_SECRET_ACCESS_KEY");
+
             if (accessKey == null || secretKey == null) {
                 return SmsResult.failure("AWS_SNS", "CONFIG_ERROR",
-                        "AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables required");
+                        "AWS credentials required via config or environment variables");
             }
 
             ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
             String amzDate = now.format(AMZ_DATE_FMT);
             String dateStamp = now.format(DATE_STAMP_FMT);
 
-            String canonicalHeaders = "host:" + host + "\nx-amz-date:" + amzDate + "\n";
-            String signedHeaders = "host;x-amz-date";
-            String payloadHash = sha256Hex("");
-            String canonicalRequest = "GET\n/\n" + queryString + "\n" + canonicalHeaders + "\n"
-                    + signedHeaders + "\n" + payloadHash;
+            // Fix Finding 3: payload hash must be hash of form body not empty string
+            String payloadHash = sha256Hex(formBody);
+
+            // Fix Finding 2: method is POST not GET
+            // content-type must be included in signed headers for POST
+            String canonicalHeaders = "content-type:application/x-www-form-urlencoded\n"
+                    + "host:" + host + "\n"
+                    + "x-amz-date:" + amzDate + "\n";
+            String signedHeaders = "content-type;host;x-amz-date";
+
+            String canonicalRequest = "POST\n/\n\n"
+                    + canonicalHeaders + "\n"
+                    + signedHeaders + "\n"
+                    + payloadHash;
 
             String credentialScope = dateStamp + "/" + region + "/" + SERVICE + "/aws4_request";
             String stringToSign = "AWS4-HMAC-SHA256\n" + amzDate + "\n" + credentialScope + "\n"
@@ -86,18 +106,21 @@ public class AwsSnsSmsGateway implements SmsGateway {
             String authorization = "AWS4-HMAC-SHA256 Credential=" + accessKey + "/" + credentialScope
                     + ", SignedHeaders=" + signedHeaders + ", Signature=" + signature;
 
-            String responseBody = webClient.get()
-                    .uri(endpoint + "/?" + queryString)
+            // Fix Finding 2: use POST with form body not GET with query string
+            String responseBody = webClient.post()
+                    .uri("/")
                     .header("Authorization", authorization)
                     .header("x-amz-date", amzDate)
+                    .contentType(org.springframework.http.MediaType.APPLICATION_FORM_URLENCODED)
+                    .bodyValue(formBody)
                     .retrieve()
                     .bodyToMono(String.class)
                     .block();
 
-            // SNS returns XML; extract MessageId
             String messageId = extractXmlElement(responseBody, "MessageId");
             log.info("AWS SNS SMS sent: messageId={}, to={}", messageId, message.to());
             return SmsResult.success(messageId, "AWS_SNS", 1);
+
         } catch (WebClientResponseException e) {
             log.error("AWS SNS API error: status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString());
             return SmsResult.failure("AWS_SNS", String.valueOf(e.getStatusCode().value()), e.getResponseBodyAsString());

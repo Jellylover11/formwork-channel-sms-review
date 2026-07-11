@@ -10,6 +10,7 @@ E:\Spring Task\studio-butterfly-java-assignment\formwork-channel-sms\src\test\ja
 E:\Spring Task\studio-butterfly-java-assignment\formwork-channel-sms\src\test\java\one\formwork\channel\sms\cost\SmsCostServiceExtractCountryCodeTest.java
 E:\Spring Task\studio-butterfly-java-assignment\formwork-channel-sms\src\test\java\one\formwork\channel\sms\cost\SmsCostServiceTest.java
 E:\Spring Task\studio-butterfly-java-assignment\formwork-channel-sms\src\test\java\one\formwork\channel\sms\provider\AwsSnsSmsGatewayExtraTest.java
+E:\Spring Task\studio-butterfly-java-assignment\formwork-channel-sms\src\test\java\one\formwork\channel\sms\provider\AwsSnsSmsGatewaySigningTest.java
 E:\Spring Task\studio-butterfly-java-assignment\formwork-channel-sms\src\test\java\one\formwork\channel\sms\provider\AwsSnsSmsGatewayTest.java
 E:\Spring Task\studio-butterfly-java-assignment\formwork-channel-sms\src\test\java\one\formwork\channel\sms\provider\BudgetSmsGatewayTest.java
 E:\Spring Task\studio-butterfly-java-assignment\formwork-channel-sms\src\test\java\one\formwork\channel\sms\provider\BudgetSmsGatewayWireMockTest.java

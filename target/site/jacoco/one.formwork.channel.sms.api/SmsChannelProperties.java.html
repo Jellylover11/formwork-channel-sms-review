@@ -40,29 +40,39 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 <span class="fc" id="L40">        public String getFromNumber() { return fromNumber; } public void setFromNumber(String s) { this.fromNumber = s; }</span>
     }
 <span class="fc" id="L42">    public static class AwsSnsProperties {</span>
-<span class="fc" id="L43">        private String region = &quot;eu-central-1&quot;; private String senderId;</span>
-<span class="fc" id="L44">        public String getRegion() { return region; } public void setRegion(String s) { this.region = s; }</span>
-<span class="fc" id="L45">        public String getSenderId() { return senderId; } public void setSenderId(String s) { this.senderId = s; }</span>
-    }
-<span class="fc" id="L47">    public static class BudgetSmsProperties {</span>
-        private String username; private String password; private String originator;
-<span class="fc" id="L49">        public String getUsername() { return username; } public void setUsername(String s) { this.username = s; }</span>
-<span class="fc" id="L50">        public String getPassword() { return password; } public void setPassword(String s) { this.password = s; }</span>
-<span class="fc" id="L51">        public String getOriginator() { return originator; } public void setOriginator(String s) { this.originator = s; }</span>
-    }
-<span class="fc" id="L53">    public static class MessageBirdProperties {</span>
-        private String accessKey; private String originator;
-<span class="fc" id="L55">        public String getAccessKey() { return accessKey; } public void setAccessKey(String s) { this.accessKey = s; }</span>
-<span class="fc" id="L56">        public String getOriginator() { return originator; } public void setOriginator(String s) { this.originator = s; }</span>
-    }
-<span class="fc" id="L58">    public static class RetryProperties {</span>
-<span class="fc" id="L59">        private int maxAttempts = 3;</span>
-<span class="fc" id="L60">        private java.time.Duration backoff = java.time.Duration.ofSeconds(5);</span>
+<span class="fc" id="L43">        private String region = &quot;eu-central-1&quot;;</span>
+        private String senderId;
+        private String accessKey;
+        private String secretKey;
 
-<span class="fc" id="L62">        public int getMaxAttempts() { return maxAttempts; }</span>
-<span class="fc" id="L63">        public void setMaxAttempts(int m) { this.maxAttempts = m; }</span>
-<span class="fc" id="L64">        public java.time.Duration getBackoff() { return backoff; }</span>
-<span class="fc" id="L65">        public void setBackoff(java.time.Duration b) { this.backoff = b; }</span>
+<span class="fc" id="L48">        public String getRegion() { return region; }</span>
+<span class="fc" id="L49">        public void setRegion(String s) { this.region = s; }</span>
+<span class="fc" id="L50">        public String getSenderId() { return senderId; }</span>
+<span class="fc" id="L51">        public void setSenderId(String s) { this.senderId = s; }</span>
+<span class="fc" id="L52">        public String getAccessKey() { return accessKey; }</span>
+<span class="fc" id="L53">        public void setAccessKey(String s) { this.accessKey = s; }</span>
+<span class="fc" id="L54">        public String getSecretKey() { return secretKey; }</span>
+<span class="fc" id="L55">        public void setSecretKey(String s) { this.secretKey = s; }</span>
+    }
+<span class="fc" id="L57">    public static class BudgetSmsProperties {</span>
+        private String username; private String password; private String originator;
+<span class="fc" id="L59">        public String getUsername() { return username; } public void setUsername(String s) { this.username = s; }</span>
+<span class="fc" id="L60">        public String getPassword() { return password; } public void setPassword(String s) { this.password = s; }</span>
+<span class="fc" id="L61">        public String getOriginator() { return originator; } public void setOriginator(String s) { this.originator = s; }</span>
+    }
+<span class="fc" id="L63">    public static class MessageBirdProperties {</span>
+        private String accessKey; private String originator;
+<span class="fc" id="L65">        public String getAccessKey() { return accessKey; } public void setAccessKey(String s) { this.accessKey = s; }</span>
+<span class="fc" id="L66">        public String getOriginator() { return originator; } public void setOriginator(String s) { this.originator = s; }</span>
+    }
+<span class="fc" id="L68">    public static class RetryProperties {</span>
+<span class="fc" id="L69">        private int maxAttempts = 3;</span>
+<span class="fc" id="L70">        private java.time.Duration backoff = java.time.Duration.ofSeconds(5);</span>
+
+<span class="fc" id="L72">        public int getMaxAttempts() { return maxAttempts; }</span>
+<span class="fc" id="L73">        public void setMaxAttempts(int m) { this.maxAttempts = m; }</span>
+<span class="fc" id="L74">        public java.time.Duration getBackoff() { return backoff; }</span>
+<span class="fc" id="L75">        public void setBackoff(java.time.Duration b) { this.backoff = b; }</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
